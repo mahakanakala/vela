@@ -1,4 +1,7 @@
 {
-  "name": "sage",
-  "slug": "sage"
+  "name": "vela",
+  "slug": "vela",
+  "plugins": [
+    "expo-font"
+  ]
 }
