@@ -28,7 +28,6 @@ type RootStackParamList = {
   Profile: undefined;
   Settings: undefined;
   AIModelSelection: undefined;
-  EmotionDetection: undefined;
   About: undefined;
 };
 
@@ -37,7 +36,6 @@ type InsideStackParamList = {
   Profile: undefined;
   Settings: undefined;
   AIModelSelection: undefined;
-  EmotionDetection: undefined;
   About: undefined;
 };
 
@@ -45,7 +43,6 @@ const Stack = createNativeStackNavigator<RootStackParamList>();
 const InsideStack = createNativeStackNavigator<InsideStackParamList>();
 
 import About from './app/screens/About';
-import EmotionDetection from './app/screens/EmotionDetection';
 import { SpinningSpiral } from './app/components/Loading';
 
 function InsideLayout() {
@@ -79,10 +76,10 @@ function InsideLayout() {
         },
       }}
     >
-      <InsideStack.Screen 
-        name="Home" 
-        component={Home} 
-        options={{ 
+      <InsideStack.Screen
+        name="Home"
+        component={Home}
+        options={{
           title: 'VELA',
           headerRight: () => (
             <TouchableOpacity
@@ -94,9 +91,9 @@ function InsideLayout() {
           )
         }}
       />
-      <InsideStack.Screen 
-        name="Profile" 
-        component={Profile} 
+      <InsideStack.Screen
+        name="Profile"
+        component={Profile}
         options={({ navigation }) => ({
           title: 'Profile',
           headerLeft: () => (
@@ -104,8 +101,8 @@ function InsideLayout() {
               onPress={() => navigation.goBack()}
               style={{ paddingLeft: 10 }}
             >
-              <Text style={{ 
-                color: theme.colors.primary, 
+              <Text style={{
+                color: theme.colors.primary,
                 fontFamily: theme.fonts.family,
                 fontSize: 16,
                 fontWeight: '500'
@@ -116,9 +113,9 @@ function InsideLayout() {
           )
         })}
       />
-      <InsideStack.Screen 
-        name="Settings" 
-        component={Settings} 
+      <InsideStack.Screen
+        name="Settings"
+        component={Settings}
         options={({ navigation }) => ({
           title: 'Settings',
           headerLeft: () => (
@@ -126,8 +123,8 @@ function InsideLayout() {
               onPress={() => navigation.goBack()}
               style={{ paddingLeft: 10 }}
             >
-              <Text style={{ 
-                color: theme.colors.primary, 
+              <Text style={{
+                color: theme.colors.primary,
                 fontFamily: theme.fonts.family,
                 fontSize: 16,
                 fontWeight: '500'
@@ -138,9 +135,9 @@ function InsideLayout() {
           )
         })}
       />
-      <InsideStack.Screen 
-        name="AIModelSelection" 
-        component={AIModelSelection} 
+      <InsideStack.Screen
+        name="AIModelSelection"
+        component={AIModelSelection}
         options={({ navigation }) => ({
           title: 'AI Model',
           headerLeft: () => (
@@ -148,8 +145,8 @@ function InsideLayout() {
               onPress={() => navigation.goBack()}
               style={{ paddingLeft: 10 }}
             >
-              <Text style={{ 
-                color: theme.colors.primary, 
+              <Text style={{
+                color: theme.colors.primary,
                 fontFamily: theme.fonts.family,
                 fontSize: 16,
                 fontWeight: '500'
@@ -160,9 +157,9 @@ function InsideLayout() {
           )
         })}
       />
-      <InsideStack.Screen 
-        name="EmotionDetection" 
-        component={EmotionDetection} 
+      <InsideStack.Screen
+        name="About"
+        component={About}
         options={({ navigation }) => ({
           headerShown: true,
           headerLeft: () => (
@@ -170,30 +167,8 @@ function InsideLayout() {
               onPress={() => navigation.goBack()}
               style={{ paddingLeft: 10 }}
             >
-              <Text style={{ 
-                color: theme.colors.primary, 
-                fontFamily: theme.fonts.family,
-                fontSize: 16,
-                fontWeight: '500'
-              }}>
-                ← Back
-              </Text>
-            </TouchableOpacity>
-          ),
-        })}
-      />
-      <InsideStack.Screen 
-        name="About" 
-        component={About} 
-        options={({ navigation }) => ({
-          headerShown: true,
-          headerLeft: () => (
-            <TouchableOpacity
-              onPress={() => navigation.goBack()}
-              style={{ paddingLeft: 10 }}
-            >
-              <Text style={{ 
-                color: theme.colors.primary, 
+              <Text style={{
+                color: theme.colors.primary,
                 fontFamily: theme.fonts.family,
                 fontSize: 16,
                 fontWeight: '500'
@@ -235,8 +210,8 @@ export default function App() {
   if (isLoading) {
     return (
       <View style={theme.loadingContainer}>
-        <SpinningSpiral 
-          message="Loading your VELA experience..." 
+        <SpinningSpiral
+          message="Loading your VELA experience..."
           spinnerColor={theme.colors.primary}
         />
       </View>
@@ -245,24 +220,28 @@ export default function App() {
 
   return (
     <NavigationContainer>
-      <Stack.Navigator 
+      <Stack.Navigator
         initialRouteName={user ? 'Landing' : 'Login'}
         id={undefined}
         screenOptions={{
           headerShown: false,
         }}
       >
-        <Stack.Screen 
-          name="Login" 
+        <Stack.Screen
+          name="Login"
           component={Login}
         />
-        <Stack.Screen 
-          name="Landing" 
+        <Stack.Screen
+          name="Landing"
           component={Landing}
         />
-        <Stack.Screen 
-          name="Home" 
+        <Stack.Screen
+          name="Home"
           component={InsideLayout}
+        />
+        <Stack.Screen
+          name="AIModelSelection"
+          component={AIModelSelection}
         />
       </Stack.Navigator>
     </NavigationContainer>

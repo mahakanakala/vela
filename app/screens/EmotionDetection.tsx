@@ -8,22 +8,21 @@ import {
   Image,
 } from 'react-native';
 import { CameraMode, CameraType, CameraView, useCameraPermissions } from 'expo-camera';
-import { WebSocket } from 'react-native-websocket';
 import { theme } from '../theme';
 import { getStatusBarHeight } from 'react-native-status-bar-height';
-import AntDesign from '@expo/vector-icons/AntDesign';
-import Feather from '@expo/vector-icons/Feather';
-import FontAwesome6 from '@expo/vector-icons/FontAwesome6';
 import { useRef, useEffect, useState, useCallback } from 'react';
+import Config from 'react-native-config';
 
 interface EmotionDetectionProps {
   navigation: any;
 }
 
+const BACKEND_WS_URL = Config.EMOTION_WS_URL;
+
 const EmotionDetection = ({ navigation }: EmotionDetectionProps) => {
   const [permission, requestPermission] = useCameraPermissions();
   const [error, setError] = useState<string | null>(null);
-  const [emotions, setEmotions] = useState<string[]>([]);
+  const [emotions, setEmotions] = useState<(string | { index: number, name: string })[]>([]);
   const [currentEmotion, setCurrentEmotion] = useState<string>('');
   const [isRecording, setIsRecording] = useState(false);
   const [voiceText, setVoiceText] = useState('');
@@ -39,14 +38,12 @@ const EmotionDetection = ({ navigation }: EmotionDetectionProps) => {
 
   const takePicture = useCallback(async () => {
     if (!cameraRef.current || !ws || ws.readyState !== WebSocket.OPEN) return;
-
     try {
       const frame = await cameraRef.current.takePictureAsync({
         quality: 0.5,
         base64: true,
         skipProcessing: true
       });
-      
       if (frame?.base64) {
         ws.send(JSON.stringify({
           type: 'frame',
@@ -63,17 +60,14 @@ const EmotionDetection = ({ navigation }: EmotionDetectionProps) => {
   // Handle video frames for emotion detection
   useEffect(() => {
     let frameInterval: NodeJS.Timeout;
-    
     const sendFrame = async () => {
       if (!cameraRef.current || !ws || ws.readyState !== WebSocket.OPEN) return;
-      
       try {
         const frame = await cameraRef.current.takePictureAsync({
           quality: 0.5,
           base64: true,
           skipProcessing: true
         });
-        
         if (frame?.base64) {
           ws.send(JSON.stringify({
             type: 'frame',
@@ -86,28 +80,21 @@ const EmotionDetection = ({ navigation }: EmotionDetectionProps) => {
         console.error(err);
       }
     };
-
-    if (cameraRef.current) {
-      // Send frames every 200ms (5 frames per second)
+    if (ws && isRecording) {
       frameInterval = setInterval(sendFrame, 200);
     }
-
     return () => {
       if (frameInterval) {
         clearInterval(frameInterval);
       }
     };
-  }, [ws, cameraRef]);
+  }, [ws, cameraRef, isRecording]);
 
   useEffect(() => {
-    // Initialize WebSocket connection
-    const wsInstance = new WebSocket('ws://localhost:8000/emotion');
-
-    wsInstance.onopen = () => {
-      console.log('WebSocket connected');
-    };
-
-    wsInstance.onmessage = (event) => {
+    if (!isRecording) return;
+    const wsInstance = new WebSocket(BACKEND_WS_URL);
+    wsInstance.onopen = () => console.log('WebSocket connected');
+    wsInstance.onmessage = (event: any) => {
       try {
         const data = JSON.parse(event.data);
         if (data.type === 'emotion') {
@@ -118,29 +105,17 @@ const EmotionDetection = ({ navigation }: EmotionDetectionProps) => {
         console.error('Error parsing WebSocket message:', err);
       }
     };
-
-    wsInstance.onclose = () => {
-      console.log('WebSocket disconnected');
-    };
-
-    wsInstance.onerror = (error) => {
-      console.error('WebSocket error:', error);
-    };
-
+    wsInstance.onclose = () => console.log('WebSocket disconnected');
+    wsInstance.onerror = (error: any) => console.error('WebSocket error:', error);
     setWs(wsInstance);
-
-    return () => {
-      wsInstance.close();
-    };
-  }, []);
+    return () => wsInstance.close();
+  }, [isRecording]);
 
   useEffect(() => {
     if (cameraRef.current) {
       cameraRef.current.resumePreview();
     }
   }, [cameraRef]);
-
-
 
   if (!permission) {
     return null;
@@ -173,33 +148,7 @@ const EmotionDetection = ({ navigation }: EmotionDetectionProps) => {
             facing='front'
             mute={true}
             responsiveOrientationWhenOrientationLocked
-          >
-          <View style={styles.buttonContainer}>
-            <View style={styles.shutterContainer}>
-              <Pressable onPress={takePicture}>
-                {({ pressed }) => (
-                  <View
-                    style={[
-                      styles.shutterBtn,
-                      {
-                        opacity: pressed ? 0.5 : 1,
-                      },
-                    ]}
-                  >
-                    <View
-                      style={[
-                        styles.shutterBtnInner,
-                        {
-                          backgroundColor: 'white',
-                        },
-                      ]}
-                    />
-                  </View>
-                )}
-              </Pressable>
-            </View>
-          </View>
-          </CameraView>
+          />
         </View>
       ) : (
         <View style={styles.permissionContainer}>
@@ -224,22 +173,19 @@ const EmotionDetection = ({ navigation }: EmotionDetectionProps) => {
             {isRecording ? 'Stop Recording' : 'Start Recording'}
           </Text>
         </Pressable>
-
-        <Pressable
-          style={styles.secondaryButton}
-          onPress={takePicture}
-        >
-          <Text style={styles.buttonText}>Take Picture</Text>
-        </Pressable>
       </View>
 
       <View style={styles.emotionHistory}>
         <Text style={styles.historyTitle}>Emotion History:</Text>
         <ScrollView style={styles.historyList}>
           {emotions.map((emotion, index) => (
-            <Text key={index} style={styles.historyItem}>
-              {emotion}
-            </Text>
+            typeof emotion === 'object' && emotion !== null && 'name' in emotion && 'index' in emotion ? (
+              <Text key={index} style={styles.historyItem}>
+                {emotion.name} (index: {emotion.index})
+              </Text>
+            ) : (
+              <Text key={index} style={styles.historyItem}>{emotion}</Text>
+            )
           ))}
         </ScrollView>
       </View>

@@ -56,7 +56,7 @@ const Home = ({ navigation }: { navigation: any }) => {
           style={[styles.button, styles.primaryButton]}
           onPress={() => navigation.navigate('Profile')}
         >
-          <Text style={styles.buttonText }>Customize AI Avatar</Text>
+          <Text style={styles.buttonText}>Customize AI Avatar</Text>
         </TouchableOpacity>
 
         <TouchableOpacity
@@ -68,7 +68,7 @@ const Home = ({ navigation }: { navigation: any }) => {
 
         <TouchableOpacity
           style={[styles.button, styles.secondaryButton]}
-          onPress={() => navigation.navigate('EmotionDetection')}
+          onPress={() => navigation.navigate('Landing')}
         >
           <Text style={styles.buttonText}>Start Emotion Detection</Text>
         </TouchableOpacity>
@@ -84,7 +84,7 @@ const Home = ({ navigation }: { navigation: any }) => {
       <View style={[styles.descriptionContainer, { padding: theme.spacing.medium }]}>
         <Text style={styles.descriptionTitle}>How It Works</Text>
         <Text style={styles.descriptionText}>
-          AI Video Companion combines advanced computer vision, natural language processing, and emotional intelligence to provide a unique interactive experience. 
+          AI Video Companion combines advanced computer vision, natural language processing, and emotional intelligence to provide a unique interactive experience.
           The AI analyzes your facial expressions and voice in real-time to understand your emotional state and provide appropriate responses.
         </Text>
       </View>

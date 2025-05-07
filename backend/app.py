@@ -38,6 +38,11 @@ model = YOLO('./models/best.pt')
 
 client_emotions = {}
 
+# Define your class mapping here. Update this list to match your model's classes.
+EMOTION_CLASSES = [
+    'neutral', 'happy', 'sad', 'angry', 'surprised', 'disgust', 'fear'  # Example, update as needed
+]
+
 @app.websocket("/ws/emotion")
 async def websocket_endpoint(websocket: WebSocket):
     await websocket.accept()
@@ -48,26 +53,44 @@ async def websocket_endpoint(websocket: WebSocket):
     try:
         while True:
             data = await websocket.receive_text()
+            print(f"[WS] Received data from client {client_id}")
             frame_data = json.loads(data)
             
-            image_bytes = base64.b64decode(frame_data['image'])
+            image_bytes = base64.b64decode(frame_data['image'] if 'image' in frame_data else frame_data.get('data'))
             image_array = np.frombuffer(image_bytes, dtype=np.uint8)
             frame = cv2.imdecode(image_array, cv2.IMREAD_COLOR)
+            print(f"[WS] Decoded image shape: {frame.shape if frame is not None else 'None'}")
             
+            print("[WS] Running model prediction...")
             results = model.predict(frame, verbose=False)
+            print(f"[WS] Model results: {results}")
             
             emotions = []
+            emotion_names = []
             for result in results:
                 for box in result.boxes:
-                    emotion = box.cls.item()  # Get the emotion class
-                    emotions.append(emotion)
+                    emotion_idx = box.cls.item()  # Get the emotion class index
+                    emotions.append(emotion_idx)
+                    emotion_name = EMOTION_CLASSES[int(emotion_idx)] if int(emotion_idx) < len(EMOTION_CLASSES) else str(emotion_idx)
+                    emotion_names.append(emotion_name)
+            print(f"[WS] Predicted emotions: {emotions} (names: {emotion_names})")
             
             client_emotions[client_id].extend(emotions)
-            
-            await websocket.send_text(json.dumps({
-                'emotions': emotions,
-                'most_common': Counter(emotions).most_common(1)[0][0] if emotions else None
-            }))
+            # Most common
+            most_common_idx = Counter(emotions).most_common(1)[0][0] if emotions else None
+            most_common_name = EMOTION_CLASSES[int(most_common_idx)] if most_common_idx is not None and int(most_common_idx) < len(EMOTION_CLASSES) else str(most_common_idx)
+            response = {
+                'emotions': [
+                    {'index': int(idx), 'name': EMOTION_CLASSES[int(idx)] if int(idx) < len(EMOTION_CLASSES) else str(idx)}
+                    for idx in emotions
+                ],
+                'most_common': {
+                    'index': int(most_common_idx) if most_common_idx is not None else None,
+                    'name': most_common_name
+                } if most_common_idx is not None else None
+            }
+            print(f"[WS] Sending response to client: {response}")
+            await websocket.send_text(json.dumps(response))
             
     except WebSocketDisconnect:
         if client_emotions[client_id]:
